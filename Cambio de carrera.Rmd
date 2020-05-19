@@ -8,6 +8,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(DT)
 library(knitr)
 library(dplyr)
 library(ggplot2)
@@ -16,19 +17,30 @@ knitr::opts_knit$set(root.dir= normalizePath('..'))
 knitr::opts_chunk$set(error = FALSE)
 ```
 
-## Introduccion
+# Introducción
 
-En el presente analisis estaremos estudiando una de las princiaples preocupaciones de las instituciones de educacion superior esta asociada las los problemas del proceso de eleccion y cambio de carrera teniendo como poblacion base la facultad de ingenieria. la recoleccion se realizo aplicando encuestas a los alumnos de las diferentes carreras ingenieria en la univercidad nacional autonoma de honduras.este estudio es de gran inportancia para poder ayudar a los alumnos que no tienen muy claras sus aptutudes academicas y asi mejorar la toma de desiciones. 
+En el presente análisis estaremos estudiando una de las principales preocupaciones de las instituciones de educación superior está asociada los problemas del proceso de elección y cambio de carrera teniendo como población base la facultad de ingeniería. la recolección se realizó aplicando encuestas a los alumnos de las diferentes carreras ingeniería en la universidad nacional autónoma de honduras. Este estudio es de gran importancia para poder ayudar a los alumnos que no tienen muy claras sus aptitudes académicas y así mejorar la toma de decisiones.
+ 
 
-# Limpieza de la data
+___
 
-## Variables capturadas encuesta
+## Limpieza de la data
+
+### Variables capturadas encuesta
 ```{r}
 rm(list=ls())
 setwd("/")
 setwd("C:/Users/REINA MARIA/Documents/Clases/2020/Formulario")
 survey_cero<-read.csv("encuesta.csv",sep=",", header=T)
-str(survey_cero)
+#str(survey_cero)
+
+library(knitr)
+library(magrittr)
+data.frame(variable = names(survey_cero),
+           classe = sapply(survey_cero, typeof),
+           values = sapply(survey_cero, function(x) paste0(head(x),  collapse = ", ")),
+           row.names = NULL) %>% 
+  kable()
 
 ```
 
@@ -37,17 +49,27 @@ Una vez realizado un primer análisis de toda la información, decidimos elimina
 - Timestamp: Dado que no nos interesa saber el tiempo en que fue llenada la información optamos por eliminar esta variable de nuestro conjunto de datos.
 - nombre_opcion_carrera: Considerando que esta variable existe en respuesta a la pregunta  ¿Le hubiera gustado estudiar otra carrera?, redunda un poco en relación a las variable de pensado_cambio_carrera, y se determino eliminar dado que también no era una variable que aportara mucho valor, dado que generaba mucha categorización por ser una variable de una pregunta muy abierta.
 
-Para hacer mas legible la lectura de las variables se renombraron
+Para hacer mas legible la lectura de las variables se renombraron y quedaron como sigue:
 
 ### Variables capturadas renombradas  
 ```{r encuesta, echo=FALSE}
 
 setwd("C:/Users/REINA MARIA/Documents/Clases/2020/Formulario")
 survey<-read.csv("encuesta_limpia.csv",sep=",", header=T)
-str(survey)
+#str(survey)
+library(knitr)
+library(magrittr)
+data.frame(variable = names(survey),
+           classe = sapply(survey, typeof),
+           values = sapply(survey, function(x) paste0(head(x),  collapse = ", ")),
+           row.names = NULL) %>% 
+  kable()
 ```
 
 Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(names(survey))` columnas en funcion a las siguentes categorias.
+
+
+___
 
 
 #### Demografica 
@@ -58,12 +80,18 @@ Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(
 - Trabaja
 - ingreso_mensual
 
+___
+
+
 #### Familiar
 
 - familiares_graduados
 - familiares_misma_carrera
 - ocupacion_madre
 - ocupacion_padre
+
+___
+
 
 #### Registro
 
@@ -76,6 +104,9 @@ Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(
 - indice_academico
 - clases_cursadas
 
+___
+
+
 #### Matricula
 
 - clases_matriculadas
@@ -84,6 +115,9 @@ Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(
 - reprobado
 - reprobado_mas_de_dos
 - clases_reprobadas_mas_de_dos
+
+___
+
 
 #### Orientacion
 
@@ -97,6 +131,9 @@ Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(
 - lugar_test_vovacional
 - tiempo_test_vocacional
 - resultados_congruentes_test
+
+___
+
 
 #### Oferta Academica
 
@@ -114,11 +151,17 @@ Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(
 - factores_no_cambio
 - interes_herramienta_tecnologica
 
+___
+
+
 #### Habitos del estudiante
 
 - jornada
 - estudia_grupo
 - horas_estudio_diario
+
+___
+
 
 #### Soft Skills
 
@@ -128,6 +171,8 @@ Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(
 - creatividad
 - liderazgo
 - autodidacta
+
+___
 
 # Imputaciones realizadas
 En el caso de la variable pensado_cambio_carrera se encontraron 4 niveles mostrados a continuacion.
@@ -152,10 +197,18 @@ Para la variable factor_cambio_carrera se obtienen los resultados siguuentes, Do
 ```{r}
   df_perc<-as.data.frame(prop.table(table(survey$factores_cambio_carrera)))
   df_perc<-df_perc %>% arrange(-Freq)
-  table(df_perc)
+  #table(df_perc)
+  library(knitr)
+  library(magrittr)
+  #data.frame(variable = df_perc,
+   #          Var1 = sapply(df_perc, typeof),
+    #         Freq = sapply(df_perc, function(x) paste0(head(x),  collapse = ", ")),
+     #        row.names = NULL) %>% 
+    kable(df_perc)
   #summary(df_perc$Freq)
 ```
-###Analisnado frecuencias variable factor_cambio_carrera
+
+### Analizando frecuencias variable factor_cambio_carrera
 analizando estas frencuencias en un boxplot, es evidente la cantidad de valores atípicos dada la dispersión de los datos, de igual manera podemos observar en el histograma la distancia entre frecuencias y en el QQ-Plot que no sigue una línea.
 
 
@@ -198,10 +251,12 @@ df_perc[df_perc$Var1 %in% c("Falta de puntos para la carrera a la cual aplico en
 
  df_perc<-as.data.frame(prop.table(table(df_perc$Categoria)))
  df_perc<-df_perc %>% arrange(-Freq)
- table(df_perc)
+ #table(df_perc)
 
 
-
+    library(knitr)
+    library(magrittr)
+    kable(df_perc)
 
 #df_perc$Var1[df_perc$Var1 == ""] <- "No Aplica"
 #df_perc$Var1[is.na(df_perc$Var1)] <- "No Aplica"
@@ -230,12 +285,15 @@ qqnorm(df_perc$Freq)
 
 Como se puede observar después del tratamiento de todas las categorías, hay una mejor distribución entre las categorías de los factores
 
-### Analisando variable multiple_carrera
+### Analizando variable multiple_carrera
 Para la variable multiple_carrera se obtuvieron los resultados, en la cual se puede observar una gran cantidad de categorías, producto de las diferentes respuestas dadas por cada entrevistado, generando esto demasiada variación entre los datos.
 ```{r}
   df_perc<-as.data.frame(prop.table(table(survey$multiple_carrera)))
   df_perc<-df_perc %>% arrange(-Freq)
-  table(df_perc)
+  #table(df_perc)
+  library(knitr)
+    library(magrittr)
+    kable(df_perc)
   #summary(df_perc$Freq)
 ```
 
@@ -268,7 +326,10 @@ df_perc[df_perc$Var1 %in% c("Si","Sí, Letras","Solo una","Técnico en reded","M
 
  df_perc<-as.data.frame(prop.table(table(df_perc$Categoria)))
  df_perc<-df_perc %>% arrange(-Freq)
- table(df_perc)
+ #stable(df_perc)
+ library(knitr)
+    library(magrittr)
+    kable(df_perc)
 
 ```
 
@@ -480,3 +541,18 @@ La comunicación de estos tres componentes es de vital importancia para para man
 Para el procesamiento de la información utilizaremos 3 componentes de azure los cuales detallo a continuación para enlazar los componentes databricks,ML Studio y Blob Storage utilizaremos lo que es data Factory que podemos configurar para que se ejecute en una hora específica y movilizar el contenido ya procesado a la base de datos para su análisis o visualización. 
 
 Utilizaremos databriks para el procesamiento ya que maneja lo que es el procesamiento de datos multiproceso y es muy rápido es una de las mejores alternativas hoy en día. para entrenar los modelos vamos a utilizar ml studio ya que contiene algoritmos de machine learning, Los cuales podemos parametrizar y entrenar para que generen las predicciones al estudiante hacia la carrera que tiene mejor vocación. Para el almacenamiento de reportes mayores a 15mb o modelos ya entrenados optamos por blobstorage de azure el cual es muy seguro y se maneja mediante roles para asignar sus respectivos permisos.
+
+## Presupuesto
+
+Service type	Custom name	Region	Description	Estimated monthly cost	Estimated monthly cost
+
+| Service type   |      Custom name      |  Region | Description | Estimated monthly cost | Estimated monthly cost |
+|----------------|:---------------------:|--------:|------------:|-----------------------:|-----------------------:|
+|Data Factory	 | |East US 2	| Tipo Azure Data Factory V2, tipo de servicio Data Pipeline, Azure Integration Runtime: 0 Ejecuciones de actividades, 0 unidades de movimiento de datos, 0 actividades de canalización, 0 actividades de canalización: externas; Integration Runtime autohospedado: 0 Ejecuciones de actividades, 0 unidades de movimiento de datos, 0 actividades de canalización, 0 actividades de canalización: externas, 0 x 8 núcleos virtuales optimizados para proceso, 0 x 8 núcleos virtuales de uso general, 0 x 8 núcleos virtuales optimizados para memoria, 1 operaciones de lectura/escritura, 1 operaciones de supervisión	| $0.75 | $0.00 |
+|App Service Plan| |East US	|Nivel Básico; 1 B3 Plan de App Service para Linux Total de ACU: 400 7 GB de memoria Equivalente de proceso de serie A | $55.70 | $0.00 |
+|Storage Accounts| |East US 2 | Redundancia Almacenamiento de blobs en bloque, Uso general V2 y LRS, Acceso frecuente Nivel de acceso, 1 x 1 PB, 1 x 100 TB de capacidad - 1 año de reserva, 100.000 operaciones de escritura, 100.000 operaciones de lista y creación de contenedores, 100.000 operaciones de lectura, 100.000 operaciones de lectura de alta prioridad de Archive Storage, 1 operaciones de otro tipo. 100 TB de recuperación de datos, 100 TB de recuperación de alta prioridad de Archive Storage, 100 TB de escritura de datos | $128.75 | $0.00 |
+|App Service| |		East US |	Nivel Básico; 1 B3 (1 núcleos, 1.75 GB de RAM, 10 GB de almacenamiento) x 730 Hours; SO Windows |	$55.70 | $0.00 |
+|App Service| |		East US |	Nivel Básico; 1 B3 (1 núcleos, 1.75 GB de RAM, 10 GB de almacenamiento) x 730 Hours; SO Windows |	$55.70 | $0.00 |
+|Azure SQL Database| |		East US 2 |	Base de datos única, modelo de compra Núcleo virtual, nivel Uso general Tier, Aprovisionado, Gen 5, 1, instancias 8 vCore, 1 año de reserva, 32 GB de almacenamiento, 0 GB de almacenamiento de copia de seguridad |	$143.96	| $0.00 |
+|Azure Databricks| |		East US 2 |	Carga de trabajo Análisis de datos, nivel Premium, 1 D3V2 (4 vCPU, 14 GB DE RAM) x 730 Hours, Pago por uso, 0.75 DBU x 730 Hours | $386.17 | $0.00 |
+|Machine Learning Studio| |		South Central US|	Free |	$0.00 |	$0.00 |
