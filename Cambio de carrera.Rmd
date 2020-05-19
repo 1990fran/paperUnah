@@ -1,0 +1,482 @@
+---
+title: "Paper Cambio de carrera"
+author: "Francisco Miguel Estrada"
+date: "18/5/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir= normalizePath('..'))
+knitr::opts_chunk$set(error = FALSE)
+```
+
+## Introduccion
+
+En el presente analisis estaremos estudiando una de las princiaples preocupaciones de las instituciones de educacion superior esta asociada las los problemas del proceso de eleccion y cambio de carrera teniendo como poblacion base la facultad de ingenieria. la recoleccion se realizo aplicando encuestas a los alumnos de las diferentes carreras ingenieria en la univercidad nacional autonoma de honduras.este estudio es de gran inportancia para poder ayudar a los alumnos que no tienen muy claras sus aptutudes academicas y asi mejorar la toma de desiciones. 
+
+# Limpieza de la data
+
+## Variables capturadas encuesta
+```{r}
+rm(list=ls())
+setwd("/")
+setwd("C:/Users/REINA MARIA/Documents/Clases/2020/Formulario")
+survey_cero<-read.csv("encuesta.csv",sep=",", header=T)
+str(survey_cero)
+
+```
+
+
+Una vez realizado un primer análisis de toda la información, decidimos eliminar las siguientes variables:
+- Timestamp: Dado que no nos interesa saber el tiempo en que fue llenada la información optamos por eliminar esta variable de nuestro conjunto de datos.
+- nombre_opcion_carrera: Considerando que esta variable existe en respuesta a la pregunta  ¿Le hubiera gustado estudiar otra carrera?, redunda un poco en relación a las variable de pensado_cambio_carrera, y se determino eliminar dado que también no era una variable que aportara mucho valor, dado que generaba mucha categorización por ser una variable de una pregunta muy abierta.
+
+Para hacer mas legible la lectura de las variables se renombraron
+
+### Variables capturadas renombradas  
+```{r encuesta, echo=FALSE}
+
+setwd("C:/Users/REINA MARIA/Documents/Clases/2020/Formulario")
+survey<-read.csv("encuesta_limpia.csv",sep=",", header=T)
+str(survey)
+```
+
+Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(names(survey))` columnas en funcion a las siguentes categorias.
+
+
+#### Demografica 
+
+- edad
+- Lugar_origen
+- Lugar_residencia
+- Trabaja
+- ingreso_mensual
+
+#### Familiar
+
+- familiares_graduados
+- familiares_misma_carrera
+- ocupacion_madre
+- ocupacion_padre
+
+#### Registro
+
+- nombre_carrera
+- multiple_carrera
+- nombre_segunda_carrera
+- otras_opciones_estudio
+- nombre_opcion_carrera
+- ano_carrera
+- indice_academico
+- clases_cursadas
+
+#### Matricula
+
+- clases_matriculadas
+- porcentaje_clases_facultad
+- porcentaje_clases_Matematica
+- reprobado
+- reprobado_mas_de_dos
+- clases_reprobadas_mas_de_dos
+
+#### Orientacion
+
+- Asistencia_feria_vocacional
+- conocimiento_plan_estudios
+- orientacion_curso_introductorio
+- asesoria_universitaria
+- actividades_profesion
+- conocimiento_test_vocacional_unah
+- previo_test_vocacional
+- lugar_test_vovacional
+- tiempo_test_vocacional
+- resultados_congruentes_test
+
+#### Oferta Academica
+
+- razones_eleccion_carrera
+- satisfaccion_carrera
+- satisfaccion_docentes
+- factor_satisfaccion
+- inseguridad_continuar_carrera
+- motivacion
+- opcion_inicial_carrera
+- oferta_academica_carrera
+- cambio_carrera
+- factores_cambio_carrera
+- pensado_realizar_cambio
+- factores_no_cambio
+- interes_herramienta_tecnologica
+
+#### Habitos del estudiante
+
+- jornada
+- estudia_grupo
+- horas_estudio_diario
+
+#### Soft Skills
+
+- trabajo en equipo
+- capacidad de comunicación oral y escrita
+- relaciones interpersonales
+- creatividad
+- liderazgo
+- autodidacta
+
+# Imputaciones realizadas
+En el caso de la variable pensado_cambio_carrera se encontraron 4 niveles mostrados a continuacion.
+
+```{r resumen_cambio_carrera}
+prop.table(table(survey$pensado_cambio_carrera))
+```
+
+Una vez realizado el análisis a la variable pensado_cambio_carrera identificamos valores vacíos, y dado que el valor “Si” y el valor “Tal vez” llevaban a la misma pregunta posteriormente se optó por imputarla a un Si, teniendo con esto una variable de tres niveles con valores vacíos, y procedimos a asignar los valores vacíos a las categorías con mas respuestas, siendo el caso la categoría “Si”.
+
+```{r}
+survey$pensado_cambio_carrera[survey$pensado_cambio_carrera == ""] <- "Sí"
+survey$pensado_cambio_carrera[survey$pensado_cambio_carrera == "Tal vez"] <- "Sí"
+table(survey$pensado_cambio_carrera)
+```
+# Análisis descriptivo
+
+### Analisando variable factor_cambio_carrera
+
+Para la variable factor_cambio_carrera se obtienen los resultados siguuentes, Donde podemos ver un resumen de las frecuencia para cada una de las categorías creadas para esta variable, cabe mencionar que dada la combinación de respuestas se genera la cantidad de categorías.
+
+```{r}
+  df_perc<-as.data.frame(prop.table(table(survey$factores_cambio_carrera)))
+  df_perc<-df_perc %>% arrange(-Freq)
+  table(df_perc)
+  #summary(df_perc$Freq)
+```
+###Analisnado frecuencias variable factor_cambio_carrera
+analizando estas frencuencias en un boxplot, es evidente la cantidad de valores atípicos dada la dispersión de los datos, de igual manera podemos observar en el histograma la distancia entre frecuencias y en el QQ-Plot que no sigue una línea.
+
+
+### boxplot de factor_cambio_carrera
+```{r}
+boxplot(df_perc$Freq)
+
+```
+
+### Histograma de factor_cambio_carrera
+```{r}
+hist(df_perc$Freq)
+
+```
+
+### qqnorm de factor_cambio_carrera
+```{r}
+qqnorm(df_perc$Freq)
+
+```
+
+Dadas las observaciones se procedió a realizar una recategorización de los factores por los que las personas no realizan un cambio de carrera, reduciéndolo a 6 categorías para una mejor distribución de la información quedando detallada.
+
+```{r}
+
+df_perc[df_perc$Var1 %in% c(NA),"Categoria"]<-"No aplica"
+
+
+
+df_perc[df_perc$Var1 %in% c("No era lo que esperaba;Falta de puntos para la carrera a la cual aplico en la PAA","No era lo que esperaba;Rendimiento académico","No era lo que esperaba","Cambio de intereses personales;No era lo que esperaba","Cambio de intereses personales;Factor económico;No era lo que esperaba","Influencia familiar;Cambio de intereses personales;Factor económico;No era lo que esperaba","Cambio de intereses personales;Factor económico;No era lo que esperaba;Rendimiento académico","Factor económico;No era lo que esperaba","Influencia familiar;Cambio de intereses personales;No era lo que esperaba","No era lo que esperaba;Rendimiento académico"),"Categoria"]<-"No era lo que esperaba"
+df_perc[df_perc$Var1 %in% c("Cambio de intereses personales","Cambio de intereses personales;Falta de puntos para la carrera a la cual aplico en la PAA","Cambio de intereses personales;No era lo que esperaba","Cambio de intereses personales;Factor económico;No era lo que esperaba","Cambio de intereses personales;Factor económico","Cambio de intereses personales;Factor económico;No era lo que esperaba;Rendimiento académico","Cambio de intereses personales;No era lo que esperaba;Falta de puntos para la carrera a la cual aplico en la PAA","Cambio de intereses personales;No era lo que esperaba;Rendimiento académico","Cambio de intereses personales;No era lo que esperaba;Rendimiento académico","Cambio de intereses personales;No era lo que esperaba;Falta de puntos para la carrera a la cual aplico en la PAA","Cambio de intereses personales;Factor económico","Cambio de intereses personales;Falta de puntos para la carrera a la cual aplico en la PAA","Cambio de intereses personales"),"Categoria"]<-"Cambio de intereses personales"
+
+df_perc[df_perc$Var1 %in% c("Falta de puntos para la carrera a la cual aplico en la PAA","Rendimiento académico"),"Categoria"]<-"Falta de puntos en la PAA"
+
+df_perc[df_perc$Var1 %in% c("Rendimiento académico","Factor económico","Factor económico;Falta de puntos para la carrera a la cual aplico en la PAA","Factor económico;No era lo que esperaba"),"Categoria"]<-"Factor económico"
+
+df_perc[df_perc$Var1 %in% c("Influencia familiar;Cambio de intereses personales;Factor económico;No era lo que esperaba","Influencia familiar","Influencia familiar;Cambio de intereses personales;No era lo que esperaba","Influencia familiar;Falta de puntos para la carrera a la cual aplico en la PAA","Influencia familiar;No era lo que esperaba","Influencia familiar;No era lo que esperaba;Falta de puntos para la carrera a la cual aplico en la PAA"),"Categoria"]<-"Influencia familiar"
+
+df_perc[df_perc$Var1 %in% c("Falta de puntos para la carrera a la cual aplico en la PAA"),"Categoria"]<-"Falta de puntos en la PAA"
+
+ df_perc<-as.data.frame(prop.table(table(df_perc$Categoria)))
+ df_perc<-df_perc %>% arrange(-Freq)
+ table(df_perc)
+
+
+
+
+#df_perc$Var1[df_perc$Var1 == ""] <- "No Aplica"
+#df_perc$Var1[is.na(df_perc$Var1)] <- "No Aplica"
+#df_perc[df_perc$Var1 %in% c(""),"Frecuencia"]<-"No Aplica"
+#df_perc[df_perc$Var1[is.na(df_perc$Var1)],"Frecuencia"]<-"No Aplica"
+#df_perc[is.na(df_perc)] <- "No Aplica"
+```
+
+
+### boxplot de factor_cambio_carrera
+```{r}
+boxplot(df_perc$Freq)
+
+```
+### Histograma de factor_cambio_carrera
+```{r}
+hist(df_perc$Freq)
+
+```
+
+### qqnorm de factor_cambio_carrera
+```{r}
+qqnorm(df_perc$Freq)
+
+```
+
+Como se puede observar después del tratamiento de todas las categorías, hay una mejor distribución entre las categorías de los factores
+
+### Analisando variable multiple_carrera
+Para la variable multiple_carrera se obtuvieron los resultados, en la cual se puede observar una gran cantidad de categorías, producto de las diferentes respuestas dadas por cada entrevistado, generando esto demasiada variación entre los datos.
+```{r}
+  df_perc<-as.data.frame(prop.table(table(survey$multiple_carrera)))
+  df_perc<-df_perc %>% arrange(-Freq)
+  table(df_perc)
+  #summary(df_perc$Freq)
+```
+
+
+Podemos observar en la ilustración, donde se registra el boxplot, histograma y QQ-Plot. El tratamiento realizado para esta variable fue convertirla en una variable binaria Si/No, ya que dadas las variaciones consideramos de mayor importancia saber si un estudiante lleva una múltiple carrera a o no, este procedimiento se hizo tomando todas las variaciones de no e imputarlas a NO y todas las categorías que tienen una carrera a un SI. 
+
+### boxplot de multiple_carrera
+```{r}
+boxplot(df_perc$Freq)
+
+```
+
+### Histograma de multiple_carrera
+```{r}
+hist(df_perc$Freq)
+
+```
+
+### qqnorm de multiple_carrera
+```{r}
+qqnorm(df_perc$Freq)
+
+```
+
+## Tranformacion variable multiple carrera
+```{r}
+
+df_perc[df_perc$Var1 %in% c(NA,"no","No","NO","No","No.","Ninguna"),"Categoria"]<-"No"
+df_perc[df_perc$Var1 %in% c("Si","Sí, Letras","Solo una","Técnico en reded","Matematicas","Matemática","Ingeniería de Sonido en línea","Diplomado de Inglés"),"Categoria"]<-"Si"
+
+ df_perc<-as.data.frame(prop.table(table(df_perc$Categoria)))
+ df_perc<-df_perc %>% arrange(-Freq)
+ table(df_perc)
+
+```
+
+### boxplot de multiple_carrera
+```{r}
+boxplot(df_perc$Freq)
+
+```
+
+### Histograma de multiple_carrera
+```{r}
+hist(df_perc$Freq)
+
+```
+
+### qqnorm de multiple_carrera
+```{r}
+qqnorm(df_perc$Freq)
+
+```
+
+Como se puede observar después del tratamiento de la columna, hay una mejor distribución qqnorm
+
+# Análisis correlacional 
+
+## factores_cambio y índice académico
+Se opto por esta correlación para saber si el índice académico y los factores de cambio están dependientemente relacionadas. 
+
+
+### Tabla proporciones variables indice_academico,cambio_carrera
+```{r}
+prop.table(table(survey$indice_academico,survey$cambio_carrera),1)
+
+```
+
+### Graficos de la relaciónes de la correlación 
+
+```{r}
+ggplot(survey)+
+  aes(x=indice_academico,fill=factor(cambio_carrera))+
+  geom_bar(position = "fill")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+```{r}
+ggplot(survey)+
+  aes(x=indice_academico,fill=factor(cambio_carrera))+
+  geom_bar(position = "stack")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+
+Para comprobar o no si las dos variables eran independientes o no, se realizó la prueba de chi cuadrado y se formularon dos hipótesis:
+- H_0: Las categorías de índice académico y factores cambio son independientes.
+- H_A: Las categorías son dependientes.
+
+El p-value obtenido mediante la prueba de chi cuadrado indica el siguiente resultado:
+```{r}
+chisq.test(table(survey$indice_academico,survey$cambio_carrera))
+```
+
+Conclusión: Según nuestro p-value rechazamos nuestra hipotesis nula, por la tanto las variables son dependientes 
+
+## factores_cambio y porcentaje_clases_facultad
+
+Con esta correlación se quiere saber si el porcentaje de clases de facultad afecta en los factores de cambio de carrera. Se genero un grafico para el respectivo análisis y visualización.
+
+### Tabla proporciones variables factores_cambio,porcentaje_clases_facultad
+```{r}
+prop.table(table(survey$porcentaje_clases_facultad,survey$cambio_carrera),1)
+
+```
+
+### Graficos de la relaciónes de la correlación 
+
+```{r}
+ggplot(survey)+
+  aes(x=porcentaje_clases_facultad,fill=factor(cambio_carrera))+
+  geom_bar(position = "fill")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+```{r}
+ggplot(survey)+
+  aes(x=porcentaje_clases_facultad,fill=factor(cambio_carrera))+
+  geom_bar(position = "stack")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+Para comprobar o no si las dos variables eran independientes o no, se realizó la prueba de chi cuadrado y se formularon dos hipótesis:
+- H_0: Las categorías de factores cambio y porcentaje clases facultad son independientes.
+- H_A: Las categorías son dependientes.
+
+El p-value obtenido mediante la prueba de chi cuadrado indica el siguiente resultado:
+
+```{r}
+chisq.test(table(survey$porcentaje_clases_facultad,survey$cambio_carrera))
+```
+
+Conclusión: Segun nuestro p-value rechazamos nuestra hipotesis nula, por la tanto las variables son dependientes
+
+## Correlaciones con la variable dependiente
+
+### Cambio de carrera e  índice de reprobación de clases
+
+```{r}
+prop.table(table(survey$indice_academico,survey$cambio_carrera),2)
+#chisq.test(table(survey$indice_academico,survey$cambio_carrera),2)
+```
+
+Aquí decidimos realizar una correlación con el índice académico vs el cambio de carrera que es nuestra variable dependiente. 
+Se desea conocer si influye o no el índice académico para realizar un cambio de carrera.
+
+- H_O: Las categorías de Índice académico y Cambio de carrera son independientes.
+- H_A: Las categorías son dependientes.
+- Procedemos a analizar los resultados obtenidos y obtenemos el valor de nuestra p-value.
+
+```{r}
+#prop.table(table(survey$indice_academico,survey$cambio_carrera),2)
+chisq.test(table(survey$indice_academico,survey$cambio_carrera))
+```
+
+```{r}
+ggplot(survey)+
+  aes(x=indice_academico,fill=factor(cambio_carrera))+
+  geom_bar(position = "fill")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+```{r}
+ggplot(survey)+
+  aes(x=indice_academico,fill=factor(cambio_carrera))+
+  geom_bar(position = "stack")+
+  theme(axis.text = element_text(angle = 45))
+```
+Conclusión: Según nuestro p-value rechazamos nuestra hipótesis nula, por lo tanto las variables son dependientes. 
+
+### Cambio de carrera e Ingresos económicos
+
+```{r}
+prop.table(table(survey$ingreso_mensual,survey$cambio_carrera),2)
+#chisq.test(table(survey$indice_academico,survey$cambio_carrera),2)
+```
+
+Aquí decidimos realizar una correlación con los ingresos mensuales económicos vs el cambio de carrera, que es nuestra variable dependiente. 
+
+Se desea conocer si influye o no el ingreso económico para realizar un cambio de carrera. 
+- H_O: Las categorías de Ingreso mensual y Cambio de carrera son independientes.
+- H_A: Las categorías son dependientes.
+Procedemos a analizar los resultados obtenidos y obtenemos el valor de nuestra p-value.
+
+```{r}
+#prop.table(table(survey$indice_academico,survey$cambio_carrera),2)
+chisq.test(table(survey$ingreso_mensual,survey$cambio_carrera))
+```
+
+```{r}
+ggplot(survey)+
+  aes(x=ingreso_mensual ,fill=factor(cambio_carrera))+
+  geom_bar(position = "fill")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+```{r}
+ggplot(survey)+
+  aes(x=ingreso_mensual,fill=factor(cambio_carrera))+
+  geom_bar(position = "stack")+
+  theme(axis.text = element_text(angle = 45))
+```
+Conclusión: Según nuestro p-value rechazamos nuestra hipótesis nula, por lo tanto las variables son dependientes. 
+
+## Solucion de TI
+
+### Plataforma online de intereses vocacionales
+
+Basados en la información recolectada a través de las encuestas por los diferentes estudiantes que colaboraron con la investigación mediante sus testimonios, se propone la creación de una plataforma online, la cual es una herramienta que pretende brindar información detallada sobre los intereses de una persona y actividades profesionales que pueden encajar con ella.
+
+Este tipo de herramientas seria de mucha ayuda a la universidad, tanto a los alumnos que están por ingresar, como los que ya pertenecen al campus. Hoy en día la universidad no cuenta con una forma de evaluar de manera efectiva y rápida, y ello conlleva a que el alumno elija una carrera sin tener ninguna orientación previa o realizar un cambio de la misma, incluso ya con algunas clases aprobadas y esto perjudica tanto a la universidad como al alumno en tiempo y dinero invertido para su educación. 
+
+### Componentes 
+
+La siguiente tabla lista los componentes que van a utilizarse para nuestra solución tecnológica y en el posterior diagrama la comunicación de los principales:
+
+### Componente	Tipo descripción
+
+- App Service Plan: Necesitamos nuestro App Service Plan donde correrán las WebApp
+- Webapp: front 	App service / WebApp (Frontend)
+- Webapp: Backend	App Service/ API-Backend
+- Azure sql database: 	Base datos sql almacenamiento data transformada. 0  
+- non relational database:	Base de datos donde se guardan los documentos de cada encuesta de los alumnos. 
+- Azure Databricks:	Para procesar la información. 
+- Azure Datafactory:	Manejo flujo de la información y distribuirlo en sus distintos componentes. 
+- Azure blob storage: 	Almacenamiento de los modelos 
+- Azure ML:	Entrenar modelos predictivos
+
+### Diagrama comunicación de principales componentes:
+![Diagrama](C:/Users/REINA MARIA/Documents/Clases/2020/Formulario/imagen.png)
+
+Nuestra solución tecnológica tiene como objetivo brindar a los estudiantes, docentes, decanos y al jefe de facultad una manera de mejorar la toma de decisiones. A los alumnos se les facilitará la opción de realizar un test vocacional en línea donde puedan obtener una respuesta que les ayude a mejorar su desenvolvimiento; y a los docentes, decanos y jefes de facultad una forma de visualizar, analizar y conocer a la población de los estudiantes obteniendo reportes de esas pruebas de aptitud y así mejorar la toma de decisiones ayudando a los alumnos y minimizando los costos que la universidad invierte en sus estudiantes en los recursos invertidos.
+
+Los componentes necesarios para el funcionamiento de este portal se orientan hacia una solución en la nube y optamos por alojarlos en Microsoft Azure ya que la universidad tiene relaciones de diferentes servicios con ellos. En los diagrama anterior incluimos dos apps services, uno para el Front-end y otro para el API; el Front-end realiza llamados HTTP al API, el cual se encargará de retornar la información necesaria que viene desde la base de datos,0 de igual manera el front-end se encarga de enviar la información de un formulario de un test vocacional al backend el cual se almacenará en una base de datos no relacional. Dentro de nuestro aplicativo va a estar manejado por roles a los cuales los usuarios tendrán diferentes permisos todo eso se asignará en la base de datos relacional y gestionado tanto por el backend como el frontend para mostrarle a los usuarios a los módulos que ellos tienen acceso según el rol.
+
+La comunicación de estos tres componentes es de vital importancia para para mantener el servicio de la aplicación y evitar que fallen estos que estarán a la disposición de los diferentes usuarios los cuales van a interactuar con el frontend. Dejando de nuestra parte un análisis y deseño de la aplicación que puedan ser utilies para los propios investigadores y también para otros profesionales de nuestra universidad.
+
+### Diagrama comunicación componentes para el procesamiento de la información. 
+
+![Diagrama procesamiento informacion](C:/Users/REINA MARIA/Documents/Clases/2020/Formulario/imagen2.png)
+
+Para el procesamiento de la información utilizaremos 3 componentes de azure los cuales detallo a continuación para enlazar los componentes databricks,ML Studio y Blob Storage utilizaremos lo que es data Factory que podemos configurar para que se ejecute en una hora específica y movilizar el contenido ya procesado a la base de datos para su análisis o visualización. 
+
+Utilizaremos databriks para el procesamiento ya que maneja lo que es el procesamiento de datos multiproceso y es muy rápido es una de las mejores alternativas hoy en día. para entrenar los modelos vamos a utilizar ml studio ya que contiene algoritmos de machine learning, Los cuales podemos parametrizar y entrenar para que generen las predicciones al estudiante hacia la carrera que tiene mejor vocación. Para el almacenamiento de reportes mayores a 15mb o modelos ya entrenados optamos por blobstorage de azure el cual es muy seguro y se maneja mediante roles para asignar sus respectivos permisos.
